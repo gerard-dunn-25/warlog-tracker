@@ -208,7 +208,7 @@ export default function WarbandDetailPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-background">
               {warband.name}
             </h1>
             <p className="text-background">{warband.factionType}</p>
@@ -241,7 +241,9 @@ export default function WarbandDetailPage() {
 
       {champions.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-semibold tracking-tight">Champions</h2>
+          <h2 className="font-semibold tracking-tight text-background">
+            Champions
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {champions.map((warrior) => (
               <Card
@@ -294,7 +296,9 @@ export default function WarbandDetailPage() {
 
       {followers.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-semibold tracking-tight">Followers</h2>
+          <h2 className="font-semibold tracking-tight text-background">
+            Followers
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {followers.map((warrior) => (
               <Card
