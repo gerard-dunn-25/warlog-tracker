@@ -8,13 +8,23 @@
  * @module
  */
 
+import type * as sessions from "../sessions.js";
+import type * as sessionwarriors from "../sessionwarriors.js";
+import type * as warbands from "../warbands.js";
+import type * as warriors from "../warriors.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  sessions: typeof sessions;
+  sessionwarriors: typeof sessionwarriors;
+  warbands: typeof warbands;
+  warriors: typeof warriors;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
