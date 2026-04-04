@@ -3,6 +3,7 @@ import { api } from '../../../convex/_generated/api'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Plus, Trash2, ChevronLeft } from 'lucide-react'
+import { Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -12,27 +13,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Dialog } from '@/components/ui/dialog'
 import type { Id } from '../../../convex/_generated/dataModel'
 
-const DEFAULT_STATS = {
-  movement: 4,
-  weaponSkill: 3,
-  ballisticSkill: 3,
-  strength: 3,
-  toughness: 3,
-  wounds: 1,
-  initiative: 3,
-  attacks: 1,
-  leadership: 7,
-}
+import CreateWarriorDialog from './CreateWarriorDialog'
+import WarriorEditDialog from '@/components/WarriorEditDialog'
+import type { Warrior } from '@/types'
+
+// CreateWarriorDialog moved to its own module: ./CreateWarriorDialog
 
 const STAT_LABELS: Record<string, string> = {
   movement: 'M',
@@ -44,115 +32,6 @@ const STAT_LABELS: Record<string, string> = {
   initiative: 'I',
   attacks: 'A',
   leadership: 'Ld',
-}
-
-function CreateWarriorDialog({
-  warbandId,
-  onClose,
-}: {
-  warbandId: Id<'warbands'>
-  onClose: () => void
-}) {
-  const createWarrior = useMutation(api.warriors.create)
-  const [name, setName] = useState('')
-  const [type, setType] = useState('')
-  const [role, setRole] = useState<'champion' | 'follower'>('follower')
-  const [coinValue, setCoinValue] = useState(0)
-  const [stats, setStats] = useState(DEFAULT_STATS)
-
-  function handleStatChange(stat: string, value: string) {
-    setStats((prev) => ({ ...prev, [stat]: parseInt(value) || 0 }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    await createWarrior({
-      warbandId,
-      name,
-      type,
-      role,
-      coinValue,
-      stats,
-      equipment: [],
-      skills: [],
-    })
-    onClose()
-  }
-
-  return (
-    <DialogContent className="max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Add Warrior</DialogTitle>
-      </DialogHeader>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Sigrid"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="type">Type</Label>
-          <Input
-            id="type"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            placeholder="Captain"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="role">Role</Label>
-          <select
-            id="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value as 'champion' | 'follower')}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-          >
-            <option value="champion">Champion</option>
-            <option value="follower">Follower</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="coinValue">Coin Value</Label>
-          <Input
-            id="coinValue"
-            type="number"
-            value={coinValue}
-            onChange={(e) => setCoinValue(parseInt(e.target.value) || 0)}
-            min={0}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Stats</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(STAT_LABELS).map(([key, label]) => (
-              <div key={key} className="flex flex-col gap-1">
-                <Label htmlFor={key} className="text-xs text-muted-foreground">
-                  {label}
-                </Label>
-                <Input
-                  id={key}
-                  type="number"
-                  value={stats[key as keyof typeof stats]}
-                  onChange={(e) => handleStatChange(key, e.target.value)}
-                  min={0}
-                  max={10}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        <Button type="submit" disabled={!name || !type}>
-          Add Warrior
-        </Button>
-      </form>
-    </DialogContent>
-  )
 }
 
 export default function WarbandDetailPage() {
@@ -167,7 +46,9 @@ export default function WarbandDetailPage() {
     warbandId ? { warbandId: warbandId as Id<'warbands'> } : 'skip',
   )
   const removeWarrior = useMutation(api.warriors.remove)
+  const updateWarrior = useMutation(api.warriors.update)
   const [addingWarrior, setAddingWarrior] = useState(false)
+  const [editingWarrior, setEditingWarrior] = useState<Warrior | null>(null)
 
   if (warband === undefined || warriors === undefined) {
     return (
@@ -230,10 +111,27 @@ export default function WarbandDetailPage() {
         />
       </Dialog>
 
+      <Dialog
+        open={!!editingWarrior}
+        onOpenChange={(open) => {
+          if (!open) setEditingWarrior(null)
+        }}
+      >
+        {editingWarrior && (
+          <WarriorEditDialog
+            warrior={editingWarrior}
+            onClose={() => setEditingWarrior(null)}
+            onSave={async (data) => {
+              await updateWarrior({ warriorId: editingWarrior._id, ...data })
+            }}
+          />
+        )}
+      </Dialog>
+
       {warriors.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <p className="text-muted-foreground">No warriors yet.</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-background">No warriors yet.</p>
+          <p className="text-sm text-background">
             Add your first warrior to get started.
           </p>
         </div>
@@ -262,6 +160,13 @@ export default function WarbandDetailPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="default">{warrior.coinValue} coin</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingWarrior(warrior)}
+                      >
+                        <Edit className="h-4 w-4 text-primary" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -317,6 +222,13 @@ export default function WarbandDetailPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="default">{warrior.coinValue} coin</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingWarrior(warrior)}
+                      >
+                        <Edit className="h-4 w-4 text-primary" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
