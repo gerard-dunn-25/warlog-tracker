@@ -20,6 +20,25 @@ export type EquipmentItem = {
   notes?: string
 }
 
+export type EquipmentCatalogItem = {
+  _id: Id<'equipmentCatalog'>
+  name: string
+  cost: number
+  strengthBonus?: number
+  armourSave?: number
+  notes?: string
+  createdBy: string
+  createdAt: number
+}
+
+export type SkillCatalogItem = {
+  _id: Id<'skillsCatalog'>
+  name: string
+  description?: string
+  createdBy: string
+  createdAt: number
+}
+
 export type Warband = {
   _id: Id<'warbands'>
   userId: string
@@ -31,7 +50,7 @@ export type Warband = {
 export type Warrior = {
   _id: Id<'warriors'>
   warbandId: Id<'warbands'>
-  name: string
+  name?: string | ''
   role: 'champion' | 'follower'
   type: string
   coinValue: number
@@ -50,6 +69,8 @@ export type SessionWarrior = {
   type: string
   coinValue: number
   isActive: boolean
+  isDead: boolean
+  deadRound?: number | null
   experience: number
   stats: Stats
   equipment: EquipmentItem[]
@@ -70,6 +91,7 @@ export type Session = {
   name: string
   status: 'active' | 'paused' | 'ended'
   playerSlots: PlayerSlot[]
+  currentRound: number
   createdAt: number
   updatedAt: number
 }

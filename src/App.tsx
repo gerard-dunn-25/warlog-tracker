@@ -8,6 +8,8 @@ import WarbandDetailPage from './app/warbands/WarbandDetailsPage'
 import SessionListPage from './app/sessions/SessionListPage'
 import SessionPage from './app/sessions/SessionPage'
 import CombatPage from './app/sessions/CombatPage'
+import EquipmentCatalogPage from './app/equipment/EquipmentCatalogPage'
+import SkillsPage from './app/skills/SkillsPage'
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth()
@@ -46,6 +48,8 @@ export default function App() {
           <Route path="/sessions" element={<SessionListPage />} />
           <Route path="/sessions/:sessionId" element={<SessionPage />} />
           <Route path="/sessions/:sessionId/combat" element={<CombatPage />} />
+          <Route path="/equipment" element={<EquipmentCatalogPage />} />
+          <Route path="/skills" element={<SkillsPage />} />
         </Routes>
       </Layout>
     </AuthGate>
