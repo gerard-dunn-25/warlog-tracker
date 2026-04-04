@@ -128,8 +128,8 @@ export default function SessionListPage() {
 
       {sessions?.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <p className="text-muted-foreground">No sessions yet.</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-background">No sessions yet.</p>
+          <p className="text-sm text-background">
             Create a session to get started.
           </p>
         </div>

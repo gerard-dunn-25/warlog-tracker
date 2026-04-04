@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { PlayerSlot, SessionWarrior } from '@/types'
+import SessionWarriorEditDialog from '@/components/SessionWarriorEditDialog'
 
 // ── Player Slot Card ──────────────────────────────────────────────
 
@@ -226,6 +227,9 @@ function RosterManager({
     warbandId: slot.warbandId,
   })
   const setActive = useMutation(api.sessionwarriors.setActive)
+  const [editingWarrior, setEditingWarrior] = useState<SessionWarrior | null>(
+    null,
+  )
 
   if (warriors === undefined) {
     return (
@@ -262,6 +266,13 @@ function RosterManager({
             className="h-4 w-4"
           />
           <span className="text-sm font-medium">{warrior.name}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setEditingWarrior(warrior)}
+          >
+            Edit
+          </Button>
           <span className="text-xs text-background">{warrior.type}</span>
         </div>
         <Badge variant="default">{warrior.coinValue} coin</Badge>
@@ -318,6 +329,20 @@ function RosterManager({
           Done
         </Button>
       </div>
+
+      <Dialog
+        open={!!editingWarrior}
+        onOpenChange={(open) => {
+          if (!open) setEditingWarrior(null)
+        }}
+      >
+        {editingWarrior && (
+          <SessionWarriorEditDialog
+            warrior={editingWarrior}
+            onClose={() => setEditingWarrior(null)}
+          />
+        )}
+      </Dialog>
     </DialogContent>
   )
 }
