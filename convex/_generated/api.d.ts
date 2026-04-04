@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as equipment from "../equipment.js";
 import type * as sessions from "../sessions.js";
 import type * as sessionwarriors from "../sessionwarriors.js";
+import type * as skills from "../skills.js";
 import type * as warbands from "../warbands.js";
 import type * as warriors from "../warriors.js";
 
@@ -20,8 +22,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  equipment: typeof equipment;
   sessions: typeof sessions;
   sessionwarriors: typeof sessionwarriors;
+  skills: typeof skills;
   warbands: typeof warbands;
   warriors: typeof warriors;
 }>;

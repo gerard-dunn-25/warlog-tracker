@@ -46,9 +46,45 @@ export const create = mutation({
       name: args.name,
       status: 'active',
       playerSlots,
+      currentRound: 1,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })
+  },
+})
+
+export const advanceRound = mutation({
+  args: { sessionId: v.id('sessions') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthorized')
+
+    const session = await ctx.db.get(args.sessionId)
+    if (!session) throw new Error('Session not found')
+    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    const newRound = (session.currentRound || 1) + 1
+
+    // Update session round
+    await ctx.db.patch(args.sessionId, {
+      currentRound: newRound,
+      updatedAt: Date.now(),
+    })
+
+    // Restore any sessionWarriors who died in prior rounds
+    const warriors = await ctx.db
+      .query('sessionWarriors')
+      .withIndex('by_session', (q) => q.eq('sessionId', args.sessionId))
+      .collect()
+
+    await Promise.all(
+      warriors.map((w) => {
+        if (w.isDead && w.deadRound != null && w.deadRound < newRound) {
+          return ctx.db.patch(w._id, { isDead: false, deadRound: undefined })
+        }
+        return Promise.resolve()
+      }),
+    )
   },
 })
 
@@ -119,11 +155,13 @@ export const assignWarband = mutation({
           type: warrior.type,
           coinValue: warrior.coinValue,
           isActive: false,
+          isDead: false,
+          deadRound: undefined,
           experience: 0,
           stats: { ...warrior.stats },
           equipment: [...warrior.equipment],
           skills: [...warrior.skills],
-          injuries: [],
+          injuries: [] as string[],
         }),
       ),
     )

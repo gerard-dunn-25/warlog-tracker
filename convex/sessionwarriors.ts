@@ -105,6 +105,26 @@ export const updateExperience = mutation({
   },
 })
 
+export const updateName = mutation({
+  args: {
+    sessionWarriorId: v.id('sessionWarriors'),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthorized')
+
+    const sessionWarrior = await ctx.db.get(args.sessionWarriorId)
+    if (!sessionWarrior) throw new Error('Session warrior not found')
+
+    const session = await ctx.db.get(sessionWarrior.sessionId)
+    if (!session) throw new Error('Session not found')
+    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    await ctx.db.patch(args.sessionWarriorId, { name: args.name })
+  },
+})
+
 export const addEquipment = mutation({
   args: {
     sessionWarriorId: v.id('sessionWarriors'),
@@ -151,6 +171,26 @@ export const removeEquipment = mutation({
   },
 })
 
+export const updateEquipment = mutation({
+  args: {
+    sessionWarriorId: v.id('sessionWarriors'),
+    equipment: v.array(equipmentItem),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthorized')
+
+    const sessionWarrior = await ctx.db.get(args.sessionWarriorId)
+    if (!sessionWarrior) throw new Error('Session warrior not found')
+
+    const session = await ctx.db.get(sessionWarrior.sessionId)
+    if (!session) throw new Error('Session not found')
+    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    await ctx.db.patch(args.sessionWarriorId, { equipment: args.equipment })
+  },
+})
+
 export const addInjury = mutation({
   args: {
     sessionWarriorId: v.id('sessionWarriors'),
@@ -194,5 +234,45 @@ export const removeInjury = mutation({
     )
 
     await ctx.db.patch(args.sessionWarriorId, { injuries: updatedInjuries })
+  },
+})
+
+export const markDead = mutation({
+  args: { sessionWarriorId: v.id('sessionWarriors') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthorized')
+
+    const sessionWarrior = await ctx.db.get(args.sessionWarriorId)
+    if (!sessionWarrior) throw new Error('Session warrior not found')
+
+    const session = await ctx.db.get(sessionWarrior.sessionId)
+    if (!session) throw new Error('Session not found')
+    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    await ctx.db.patch(args.sessionWarriorId, {
+      isDead: true,
+      deadRound: session.currentRound,
+    })
+  },
+})
+
+export const restore = mutation({
+  args: { sessionWarriorId: v.id('sessionWarriors') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error('Unauthorized')
+
+    const sessionWarrior = await ctx.db.get(args.sessionWarriorId)
+    if (!sessionWarrior) throw new Error('Session warrior not found')
+
+    const session = await ctx.db.get(sessionWarrior.sessionId)
+    if (!session) throw new Error('Session not found')
+    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    await ctx.db.patch(args.sessionWarriorId, {
+      isDead: false,
+      deadRound: undefined,
+    })
   },
 })
