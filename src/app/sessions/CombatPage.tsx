@@ -41,7 +41,7 @@ function WarriorSelect({
         <option value="">Select warrior...</option>
         {warriors.map((w) => (
           <option key={w._id} value={w._id}>
-            {w.name} ({w.type})
+            {w.name && w.name.trim() ? `${w.name} (${w.type})` : w.type}
           </option>
         ))}
       </select>
@@ -125,8 +125,11 @@ function CombatResult({
 
       {equipmentNotes.length > 0 && (
         <div className="flex flex-col gap-1">
+          <h4 className="text-sm font-semibold text-background">
+            Equipment Note:
+          </h4>
           {equipmentNotes.map((note, i) => (
-            <p key={i} className="text-xs text-muted-foreground">
+            <p key={i} className="text-xs text-background">
               {note}
             </p>
           ))}
@@ -183,6 +186,10 @@ export default function CombatPage() {
   const attacker = activeWarriors.find((w) => w._id === attackerId)
   const defender = activeWarriors.find((w) => w._id === defenderId)
 
+  function displayName(w: SessionWarrior) {
+    return w.name && w.name.trim() ? w.name : w.type
+  }
+
   function swap() {
     const prev = attackerId
     setAttackerId(defenderId)
@@ -191,7 +198,10 @@ export default function CombatPage() {
 
   const initiativeNote =
     attacker && defender
-      ? calculateCombat(attacker, defender).initiativeNote
+      ? calculateCombat(
+          { ...attacker, name: displayName(attacker) },
+          { ...defender, name: displayName(defender) },
+        ).initiativeNote
       : null
 
   return (
@@ -257,7 +267,7 @@ export default function CombatPage() {
                 onChange={setDefenderId}
               />
               {initiativeNote && (
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-xs text-background">
                   {initiativeNote}
                 </p>
               )}
@@ -270,7 +280,7 @@ export default function CombatPage() {
                 <CardHeader className="pb-2 ">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base text-background">
-                      {attacker.name} → {defender.name}
+                      {displayName(attacker)} → {displayName(defender)}
                     </CardTitle>
                     <Badge variant="default">
                       S{attacker.stats.strength} vs T{defender.stats.toughness}
@@ -285,7 +295,7 @@ export default function CombatPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between ">
                     <CardTitle className="text-base text-background">
-                      {defender.name} → {attacker.name}
+                      {displayName(defender)} → {displayName(attacker)}
                     </CardTitle>
                     <Badge variant="default">
                       S{defender.stats.strength} vs T{attacker.stats.toughness}

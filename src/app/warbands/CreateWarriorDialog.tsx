@@ -81,8 +81,7 @@ export default function CreateWarriorDialog({
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Sigrid"
-            required
+            placeholder="Sigrid (optional)"
           />
         </div>
 
@@ -145,7 +144,7 @@ export default function CreateWarriorDialog({
           </div>
         </div>
 
-        <Button type="submit" disabled={!name || !type}>
+        <Button type="submit" disabled={!type}>
           Add Warrior
         </Button>
       </form>

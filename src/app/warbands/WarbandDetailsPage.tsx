@@ -165,7 +165,7 @@ export default function WarbandDetailPage() {
                         size="icon"
                         onClick={() => setEditingWarrior(warrior)}
                       >
-                        <Edit className="h-4 w-4 text-primary" />
+                        <Edit className="h-4 w-4 text-amber-400" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -227,7 +227,7 @@ export default function WarbandDetailPage() {
                         size="icon"
                         onClick={() => setEditingWarrior(warrior)}
                       >
-                        <Edit className="h-4 w-4 text-primary" />
+                        <Edit className="h-4 w-4 text-amber-400" />
                       </Button>
                       <Button
                         variant="ghost"

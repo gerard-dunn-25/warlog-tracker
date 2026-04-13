@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import EquipmentSelector from '@/components/EquipmentSelector'
+import { sanitizeEquipmentList } from '@/lib/sanitize'
 import type { SessionWarrior, Stats, EquipmentItem } from '@/types'
 
 export default function SessionWarriorEditDialog({
@@ -38,7 +39,10 @@ export default function SessionWarriorEditDialog({
     await updateName({ sessionWarriorId: warrior._id, name })
     await updateStats({ sessionWarriorId: warrior._id, stats })
     await updateExperience({ sessionWarriorId: warrior._id, experience })
-    await updateEquipment({ sessionWarriorId: warrior._id, equipment })
+    await updateEquipment({
+      sessionWarriorId: warrior._id,
+      equipment: sanitizeEquipmentList(equipment),
+    })
     onClose()
   }
 

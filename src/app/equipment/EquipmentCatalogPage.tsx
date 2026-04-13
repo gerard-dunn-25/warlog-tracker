@@ -3,6 +3,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { EquipmentCatalogItem } from '@/types'
 import { Button } from '@/components/ui/button'
+import { Edit, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -222,31 +223,35 @@ export default function EquipmentCatalogPage() {
                     size="icon"
                     onClick={() => startEdit(it)}
                   >
-                    Edit
+                    <Edit className="h-4 w-4 text-amber-400" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeletingId(it._id)}
                   >
-                    Delete
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               {String(editingId) === String(it._id) ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 text-background">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Name</Label>
+                      <Label className="text-sm text-muted-foreground">
+                        Name
+                      </Label>
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label>Cost</Label>
+                      <Label className="text-sm text-muted-foreground">
+                        Cost
+                      </Label>
                       <Input
                         type="number"
                         value={editCost}
@@ -258,7 +263,9 @@ export default function EquipmentCatalogPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Strength Bonus</Label>
+                      <Label className="text-sm text-muted-foreground">
+                        Strength Bonus
+                      </Label>
                       <Input
                         type="number"
                         value={editStrength ?? ''}
@@ -272,7 +279,9 @@ export default function EquipmentCatalogPage() {
                       />
                     </div>
                     <div>
-                      <Label>Armour Save</Label>
+                      <Label className="text-sm text-muted-foreground">
+                        Armour Save
+                      </Label>
                       <Input
                         type="number"
                         value={editArmourSave ?? ''}
@@ -287,7 +296,9 @@ export default function EquipmentCatalogPage() {
                     </div>
                   </div>
                   <div>
-                    <Label>Notes</Label>
+                    <Label className="text-sm text-muted-foreground">
+                      Notes
+                    </Label>
                     <Input
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}

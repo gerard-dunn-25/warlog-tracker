@@ -4,6 +4,7 @@ import { api } from '../../../convex/_generated/api'
 import type { SkillCatalogItem } from '@/types'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { Button } from '@/components/ui/button'
+import { Edit, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -103,7 +104,13 @@ export default function SkillsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button type="submit">Add Skill</Button>
-              <Button variant="ghost" onClick={() => setCreateOpen(false)} type="button">Cancel</Button>
+              <Button
+                variant="ghost"
+                onClick={() => setCreateOpen(false)}
+                type="button"
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -131,30 +138,34 @@ export default function SkillsPage() {
                     size="icon"
                     onClick={() => startEdit(it)}
                   >
-                    Edit
+                    <Edit className="h-4 w-4 text-amber-400" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeletingId(it._id)}
                   >
-                    Delete
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               {String(editingId) === String(it._id) ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 text-background">
                   <div>
-                    <Label>Name</Label>
+                    <Label className="text-sm text-muted-foreground">
+                      Name
+                    </Label>
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label>Description</Label>
+                    <Label className="text-sm text-muted-foreground">
+                      Description
+                    </Label>
                     <Input
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
