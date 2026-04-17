@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Dialog } from '@/components/ui/dialog'
 import type { Id } from '../../../convex/_generated/dataModel'
 
@@ -75,7 +74,6 @@ export default function WarbandDetailPage() {
 
   const champions = warriors.filter((w) => w.role === 'champion')
   const followers = warriors.filter((w) => w.role === 'follower')
-  const totalCost = warriors.reduce((sum, w) => sum + w.coinValue, 0)
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,7 +94,6 @@ export default function WarbandDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="default">{totalCost} coin</Badge>
           <Button onClick={() => setAddingWarrior(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Warrior
@@ -159,7 +156,6 @@ export default function WarbandDetailPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="default">{warrior.coinValue} coin</Badge>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -221,7 +217,6 @@ export default function WarbandDetailPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="default">{warrior.coinValue} coin</Badge>
                       <Button
                         variant="ghost"
                         size="icon"

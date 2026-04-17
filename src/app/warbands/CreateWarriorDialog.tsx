@@ -36,6 +36,18 @@ const STAT_LABELS: Record<keyof Stats, string> = {
   leadership: 'Ld',
 }
 
+const STAT_ORDER: (keyof Stats)[] = [
+  'movement',
+  'weaponSkill',
+  'ballisticSkill',
+  'strength',
+  'toughness',
+  'wounds',
+  'initiative',
+  'attacks',
+  'leadership',
+]
+
 export default function CreateWarriorDialog({
   warbandId,
   onClose,
@@ -47,7 +59,6 @@ export default function CreateWarriorDialog({
   const [name, setName] = useState('')
   const [type, setType] = useState('')
   const [role, setRole] = useState<'champion' | 'follower'>('follower')
-  const [coinValue, setCoinValue] = useState(0)
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
 
   function handleStatChange(stat: keyof Stats, value: string) {
@@ -61,7 +72,6 @@ export default function CreateWarriorDialog({
       name,
       type,
       role,
-      coinValue,
       stats,
       equipment: [],
       skills: [],
@@ -110,20 +120,9 @@ export default function CreateWarriorDialog({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="coinValue">Coin Value</Label>
-          <Input
-            id="coinValue"
-            type="number"
-            value={coinValue}
-            onChange={(e) => setCoinValue(parseInt(e.target.value) || 0)}
-            min={0}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
           <Label>Stats</Label>
           <div className="grid grid-cols-3 gap-2">
-            {(Object.keys(STAT_LABELS) as (keyof Stats)[]).map((key) => (
+            {STAT_ORDER.map((key) => (
               <div key={String(key)} className="flex flex-col gap-1">
                 <Label
                   htmlFor={String(key)}

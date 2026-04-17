@@ -178,8 +178,6 @@ export const assignWarband = mutation({
   },
 })
 
-// Note: slot gold/coin handling removed per project decision
-
 export const updateSlotLabel = mutation({
   args: {
     sessionId: v.id('sessions'),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { EquipmentCatalogItem } from '@/types'
@@ -23,20 +23,35 @@ import {
 } from '@/components/ui/dialog'
 
 export default function EquipmentCatalogPage() {
-  const items = (useQuery(api.equipment.list) as EquipmentCatalogItem[]) ?? []
+  const rawItems = useQuery(api.equipment.list) as
+    | EquipmentCatalogItem[]
+    | undefined
+    | null
+
+  const items = useMemo(
+    () => (rawItems ?? []) as EquipmentCatalogItem[],
+    [rawItems],
+  )
   const create = useMutation(api.equipment.create)
   const remove = useMutation(api.equipment.remove)
   const update = useMutation(api.equipment.update)
   const [name, setName] = useState('')
-  const [cost, setCost] = useState(0)
+  const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [createStrength, setCreateStrength] = useState<number | undefined>(
     undefined,
   )
+  const [createPenetration, setCreatePenetration] = useState<
+    number | undefined
+  >(undefined)
+  const [createInvul, setCreateInvul] = useState<number | undefined>(undefined)
   const [createArmourSave, setCreateArmourSave] = useState<number | undefined>(
     undefined,
   )
   const [createNotes, setCreateNotes] = useState('')
+  const [createCategory, setCreateCategory] = useState<
+    'weapon' | 'armour' | ''
+  >('')
 
   const [editingId, setEditingId] = useState<Id<'equipmentCatalog'> | null>(
     null,
@@ -45,52 +60,74 @@ export default function EquipmentCatalogPage() {
     null,
   )
   const [editName, setEditName] = useState('')
-  const [editCost, setEditCost] = useState(0)
   const [editStrength, setEditStrength] = useState<number | undefined>(
     undefined,
   )
+  const [editPenetration, setEditPenetration] = useState<number | undefined>(
+    undefined,
+  )
+  const [editInvul, setEditInvul] = useState<number | undefined>(undefined)
   const [editArmourSave, setEditArmourSave] = useState<number | undefined>(
     undefined,
   )
   const [editNotes, setEditNotes] = useState('')
+  const [editCategory, setEditCategory] = useState<'weapon' | 'armour' | ''>('')
 
   async function handleCreateSubmit(e: React.FormEvent) {
     e.preventDefault()
     await create({
       name,
-      cost,
       strengthBonus: createStrength ?? undefined,
+      category: createCategory || undefined,
+      penetration: createPenetration ?? undefined,
+      invulnerableSave: createInvul ?? undefined,
       armourSave: createArmourSave ?? undefined,
       notes: createNotes || undefined,
     })
     setName('')
-    setCost(0)
     setCreateStrength(undefined)
+    setCreatePenetration(undefined)
+    setCreateInvul(undefined)
     setCreateArmourSave(undefined)
     setCreateNotes('')
+    setCreateCategory('')
     setCreateOpen(false)
   }
 
   function startEdit(it: EquipmentCatalogItem) {
     setEditingId(it._id)
     setEditName(it.name)
-    setEditCost(it.cost)
     setEditStrength(it.strengthBonus)
+    setEditPenetration(it.penetration)
+    setEditInvul(it.invulnerableSave)
     setEditArmourSave(it.armourSave)
     setEditNotes(it.notes ?? '')
+    setEditCategory(it.category ?? '')
   }
 
   async function saveEdit(id: Id<'equipmentCatalog'>) {
     await update({
       equipmentId: id,
       name: editName || undefined,
-      cost: editCost || undefined,
       strengthBonus: editStrength ?? undefined,
+      category: editCategory || undefined,
+      penetration: editPenetration ?? undefined,
+      invulnerableSave: editInvul ?? undefined,
       armourSave: editArmourSave ?? undefined,
       notes: editNotes || undefined,
     })
     setEditingId(null)
   }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return items
+    return items.filter(
+      (it) =>
+        it.name.toLowerCase().includes(q) ||
+        (it.notes || '').toLowerCase().includes(q),
+    )
+  }, [items, search])
 
   return (
     <div className="flex flex-col gap-4">
@@ -104,7 +141,15 @@ export default function EquipmentCatalogPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="default">{items.length} items</Badge>
+          <Input
+            placeholder="Search equipment by name or notes"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs"
+          />
+          <Badge variant="default">
+            {filtered.length} / {items.length}
+          </Badge>
         </div>
       </div>
 
@@ -112,8 +157,9 @@ export default function EquipmentCatalogPage() {
         <Button
           onClick={() => {
             setName('')
-            setCost(0)
             setCreateStrength(undefined)
+            setCreatePenetration(undefined)
+            setCreateInvul(undefined)
             setCreateArmourSave(undefined)
             setCreateNotes('')
             setCreateOpen(true)
@@ -140,17 +186,6 @@ export default function EquipmentCatalogPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="cost">Cost</Label>
-              <Input
-                id="cost"
-                type="number"
-                value={cost}
-                onChange={(e) => setCost(parseInt(e.target.value) || 0)}
-                min={0}
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label>Strength Bonus</Label>
@@ -159,6 +194,18 @@ export default function EquipmentCatalogPage() {
                   value={createStrength ?? ''}
                   onChange={(e) =>
                     setCreateStrength(
+                      e.target.value ? parseInt(e.target.value) : undefined,
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <Label>Penetration (AP)</Label>
+                <Input
+                  type="number"
+                  value={createPenetration ?? ''}
+                  onChange={(e) =>
+                    setCreatePenetration(
                       e.target.value ? parseInt(e.target.value) : undefined,
                     )
                   }
@@ -176,6 +223,18 @@ export default function EquipmentCatalogPage() {
                   }
                 />
               </div>
+              <div>
+                <Label>Invulnerable Save</Label>
+                <Input
+                  type="number"
+                  value={createInvul ?? ''}
+                  onChange={(e) =>
+                    setCreateInvul(
+                      e.target.value ? parseInt(e.target.value) : undefined,
+                    )
+                  }
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -185,6 +244,21 @@ export default function EquipmentCatalogPage() {
                 value={createNotes}
                 onChange={(e) => setCreateNotes(e.target.value)}
               />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Category</Label>
+              <select
+                value={createCategory}
+                onChange={(e) =>
+                  setCreateCategory(e.target.value as 'weapon' | 'armour' | '')
+                }
+                className="h-9 w-full rounded-md border border-input bg-zinc-900 px-3 py-1 text-sm text-background"
+              >
+                <option value="">(unset)</option>
+                <option value="weapon">Weapon</option>
+                <option value="armour">Armour</option>
+              </select>
             </div>
 
             <div className="flex items-center gap-2">
@@ -202,7 +276,7 @@ export default function EquipmentCatalogPage() {
       </Dialog>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {items.map((it) => (
+        {filtered.map((it) => (
           <Card
             key={it._id}
             className="bg-black/30 backdrop-blur-sm border-white/20"
@@ -250,15 +324,21 @@ export default function EquipmentCatalogPage() {
                     </div>
                     <div>
                       <Label className="text-sm text-muted-foreground">
-                        Cost
+                        Category
                       </Label>
-                      <Input
-                        type="number"
-                        value={editCost}
+                      <select
+                        value={editCategory}
                         onChange={(e) =>
-                          setEditCost(parseInt(e.target.value) || 0)
+                          setEditCategory(
+                            e.target.value as 'weapon' | 'armour' | '',
+                          )
                         }
-                      />
+                        className="h-9 w-full rounded-md border border-input bg-zinc-900 px-3 py-1 text-sm text-background"
+                      >
+                        <option value="">(unset)</option>
+                        <option value="weapon">Weapon</option>
+                        <option value="armour">Armour</option>
+                      </select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -280,6 +360,22 @@ export default function EquipmentCatalogPage() {
                     </div>
                     <div>
                       <Label className="text-sm text-muted-foreground">
+                        Penetration (AP)
+                      </Label>
+                      <Input
+                        type="number"
+                        value={editPenetration ?? ''}
+                        onChange={(e) =>
+                          setEditPenetration(
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined,
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
                         Armour Save
                       </Label>
                       <Input
@@ -287,6 +383,22 @@ export default function EquipmentCatalogPage() {
                         value={editArmourSave ?? ''}
                         onChange={(e) =>
                           setEditArmourSave(
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined,
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Invulnerable Save
+                      </Label>
+                      <Input
+                        type="number"
+                        value={editInvul ?? ''}
+                        onChange={(e) =>
+                          setEditInvul(
                             e.target.value
                               ? parseInt(e.target.value)
                               : undefined,
@@ -317,12 +429,11 @@ export default function EquipmentCatalogPage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    {it.cost} coin
-                  </div>
                   <div className="text-xs text-muted-foreground">
                     {it.strengthBonus ? `S+${it.strengthBonus}` : ''}{' '}
-                    {it.armourSave ? `AS ${it.armourSave}` : ''}
+                    {it.penetration ? `AP ${it.penetration}` : ''}{' '}
+                    {it.armourSave ? `AS ${it.armourSave}` : ''}{' '}
+                    {it.invulnerableSave ? `Inv ${it.invulnerableSave}` : ''}
                   </div>
                 </div>
               )}

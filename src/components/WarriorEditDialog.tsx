@@ -34,7 +34,6 @@ export default function WarriorEditDialog({
   const [name, setName] = useState(warrior.name)
   const [type, setType] = useState(warrior.type)
   const [role, setRole] = useState<'champion' | 'follower'>(warrior.role)
-  const [coinValue, setCoinValue] = useState(warrior.coinValue || 0)
   const [stats, setStats] = useState<Stats>(warrior.stats)
   const [equipment, setEquipment] = useState<EquipmentItem[]>(
     warrior.equipment || [],
@@ -46,7 +45,7 @@ export default function WarriorEditDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await onSave({ name, type, role, coinValue, stats, equipment })
+    await onSave({ name, type, role, stats, equipment })
     onClose()
   }
 
@@ -85,15 +84,6 @@ export default function WarriorEditDialog({
             <option value="champion">Champion</option>
             <option value="follower">Follower</option>
           </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label>Coin Value</Label>
-          <Input
-            type="number"
-            value={coinValue}
-            onChange={(e) => setCoinValue(parseInt(e.target.value) || 0)}
-          />
         </div>
 
         <div className="flex flex-col gap-1.5">

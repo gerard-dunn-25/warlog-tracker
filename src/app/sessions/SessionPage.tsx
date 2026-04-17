@@ -33,7 +33,6 @@ function PlayerSlotCard({
   const warbands = useQuery(api.warbands.list)
   const assignWarband = useMutation(api.sessions.assignWarband)
   const updateLabel = useMutation(api.sessions.updateSlotLabel)
-  const updateGold = useMutation(api.sessions.updateSlotGold)
   const warriors = useQuery(
     api.sessionwarriors.listBySessionAndWarband,
     slot.warbandId ? { sessionId, warbandId: slot.warbandId } : 'skip',
@@ -41,18 +40,12 @@ function PlayerSlotCard({
 
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelValue, setLabelValue] = useState(slot.label)
-  const [editingGold, setEditingGold] = useState(false)
-  const [goldValue, setGoldValue] = useState(slot.gold)
   const [assigningWarband, setAssigningWarband] = useState(false)
-  const [budgetValue, setBudgetValue] = useState(
-    slot.coinBudget?.toString() ?? '',
-  )
   const [selectedWarbandId, setSelectedWarbandId] = useState<
     Id<'warbands'> | ''
   >(slot.warbandId ?? '')
 
   const activeWarriors = (warriors ?? []).filter((w) => w.isActive)
-  const spentCoins = activeWarriors.reduce((sum, w) => sum + w.coinValue, 0)
   const warband = warbands?.find((wb) => wb._id === slot.warbandId)
 
   async function handleAssign(e: React.FormEvent) {
@@ -62,7 +55,6 @@ function PlayerSlotCard({
       sessionId,
       slotIndex,
       warbandId: selectedWarbandId as Id<'warbands'>,
-      coinBudget: budgetValue ? parseInt(budgetValue) : undefined,
     })
     setAssigningWarband(false)
   }
@@ -71,11 +63,6 @@ function PlayerSlotCard({
     if (labelValue.trim() === slot.label) return setEditingLabel(false)
     await updateLabel({ sessionId, slotIndex, label: labelValue.trim() })
     setEditingLabel(false)
-  }
-
-  async function handleGoldSave() {
-    await updateGold({ sessionId, slotIndex, gold: goldValue })
-    setEditingGold(false)
   }
 
   return (
@@ -101,10 +88,7 @@ function PlayerSlotCard({
               </CardTitle>
             )}
             {slot.warbandId && (
-              <Badge variant="default">
-                {spentCoins}
-                {slot.coinBudget ? ` / ${slot.coinBudget}` : ''} coin
-              </Badge>
+              <Badge variant="default">{activeWarriors.length}</Badge>
             )}
           </div>
           {warband && <p className="text-sm text-background">{warband.name}</p>}
@@ -124,30 +108,7 @@ function PlayerSlotCard({
                 <span className="text-background">Active warriors</span>
                 <span className="text-background">{activeWarriors.length}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-background">Gold earned</span>
-                {editingGold ? (
-                  <Input
-                    autoFocus
-                    type="number"
-                    value={goldValue}
-                    onChange={(e) =>
-                      setGoldValue(parseInt(e.target.value) || 0)
-                    }
-                    onBlur={handleGoldSave}
-                    onKeyDown={(e) => e.key === 'Enter' && handleGoldSave()}
-                    className="h-6 w-20 text-right text-sm"
-                    min={0}
-                  />
-                ) : (
-                  <span
-                    className="cursor-pointer text-background hover:underline"
-                    onClick={() => setEditingGold(true)}
-                  >
-                    {slot.gold} gc
-                  </span>
-                )}
-              </div>
+
               <Button
                 variant="default"
                 size="sm"
@@ -189,17 +150,7 @@ function PlayerSlotCard({
                 ))}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5 text-background">
-              <Label htmlFor="budget">Coin Budget (optional)</Label>
-              <Input
-                id="budget"
-                type="number"
-                value={budgetValue}
-                onChange={(e) => setBudgetValue(e.target.value)}
-                placeholder="500"
-                min={0}
-              />
-            </div>
+
             <Button type="submit" disabled={!selectedWarbandId}>
               Assign
             </Button>
@@ -245,10 +196,6 @@ function RosterManager({
 
   const champions = warriors.filter((w) => w.role === 'champion')
   const followers = warriors.filter((w) => w.role === 'follower')
-  const spentCoins = warriors
-    .filter((w) => w.isActive)
-    .reduce((sum, w) => sum + w.coinValue, 0)
-  const budget = slot.coinBudget
 
   function WarriorRow({ warrior }: { warrior: SessionWarrior }) {
     return (
@@ -275,7 +222,6 @@ function RosterManager({
           </Button>
           <span className="text-xs text-background">{warrior.type}</span>
         </div>
-        <Badge variant="default">{warrior.coinValue} coin</Badge>
       </div>
     )
   }
@@ -286,27 +232,6 @@ function RosterManager({
         <DialogTitle>Manage Roster — {slot.label}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-4">
-        {budget !== undefined && (
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-background">Budget</span>
-              <span className={spentCoins > budget ? 'text-destructive' : ''}>
-                {spentCoins} / {budget} coin
-              </span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-secondary">
-              <div
-                className={`h-2 rounded-full transition-all ${
-                  spentCoins > budget ? 'bg-destructive' : 'bg-primary'
-                }`}
-                style={{
-                  width: `${Math.min((spentCoins / budget) * 100, 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
-
         {champions.length > 0 && (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold">Champions</p>
