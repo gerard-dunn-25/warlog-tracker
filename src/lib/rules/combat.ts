@@ -12,9 +12,10 @@ export type WarriorStats = {
 
 export type EquipmentItem = {
   name: string
-  cost: number
   strengthBonus?: number
   armourSave?: number
+  penetration?: number
+  invulnerableSave?: number
   notes?: string
 }
 
@@ -24,10 +25,17 @@ export type CombatantInfo = {
   equipment: EquipmentItem[]
 }
 
+export type ArmourSaveResult = {
+  base: number | null
+  modified: number | null
+  invulnerable: number | null
+  effective: number | null
+}
+
 export type AttackResult = {
   toHit: number
   toWound: number
-  armourSave: number | null
+  armourSave: ArmourSaveResult
   effectiveStrength: number
   equipmentNotes: string[]
 }
@@ -79,15 +87,38 @@ function resolveEffectiveStrength(combatant: CombatantInfo): number {
   return clamp(combatant.stats.strength + bonus)
 }
 
-function resolveArmourSave(combatant: CombatantInfo): number | null {
-  const saves = combatant.equipment
+export function resolveArmourSave(
+  combatant: CombatantInfo,
+  attackerPenetration = 0,
+): ArmourSaveResult {
+  const baseSaves = combatant.equipment
     .map((item) => item.armourSave)
-    .filter((save): save is number => save !== undefined)
+    .filter((s): s is number => s !== undefined)
 
-  if (saves.length === 0) return null
+  const invuls = combatant.equipment
+    .map((item) => item.invulnerableSave)
+    .filter((s): s is number => s !== undefined)
 
-  // Best (lowest) armour save wins
-  return Math.min(...saves)
+  const base = baseSaves.length === 0 ? null : Math.min(...baseSaves)
+  const invulnerable = invuls.length === 0 ? null : Math.min(...invuls)
+
+  const modified = base !== null ? base + attackerPenetration : null
+
+  // Regular save can only be attempted if modified <= 6
+  const effectiveRegular = modified !== null && modified <= 6 ? modified : null
+
+  // invulnerable saves ignore penetration
+  const effective = [effectiveRegular, invulnerable].filter(
+    (v) => v !== null,
+  ) as number[]
+  const chosen = effective.length === 0 ? null : Math.min(...effective)
+
+  return {
+    base,
+    modified,
+    invulnerable,
+    effective: chosen,
+  }
 }
 
 function getEquipmentNotes(combatant: CombatantInfo): string[] {
@@ -101,7 +132,10 @@ function calculateAttack(
   defender: CombatantInfo,
 ): AttackResult {
   const effectiveStrength = resolveEffectiveStrength(attacker)
-  const armourSave = resolveArmourSave(defender)
+  const attackerPen = attacker.equipment
+    .map((it) => it.penetration ?? 0)
+    .reduce((max, v) => Math.max(max, v), 0)
+  const armourSave = resolveArmourSave(defender, attackerPen)
 
   const ws = clamp(attacker.stats.weaponSkill)
   const defenderWs = clamp(defender.stats.weaponSkill)
