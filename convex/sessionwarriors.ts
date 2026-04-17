@@ -3,10 +3,12 @@ import { mutation, query } from './_generated/server'
 
 const equipmentItem = v.object({
   name: v.string(),
-  cost: v.number(),
-  strengthBonus: v.optional(v.number()),
-  armourSave: v.optional(v.number()),
+  strengthBonus: v.optional(v.float64()),
+  penetration: v.optional(v.float64()),
+  invulnerableSave: v.optional(v.float64()),
+  armourSave: v.optional(v.float64()),
   notes: v.optional(v.string()),
+  category: v.optional(v.union(v.literal('weapon'), v.literal('armour'))),
 })
 
 export const listBySession = query({
@@ -85,26 +87,6 @@ export const updateStats = mutation({
   },
 })
 
-export const updateExperience = mutation({
-  args: {
-    sessionWarriorId: v.id('sessionWarriors'),
-    experience: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthorized')
-
-    const sessionWarrior = await ctx.db.get(args.sessionWarriorId)
-    if (!sessionWarrior) throw new Error('Session warrior not found')
-
-    const session = await ctx.db.get(sessionWarrior.sessionId)
-    if (!session) throw new Error('Session not found')
-    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
-
-    await ctx.db.patch(args.sessionWarriorId, { experience: args.experience })
-  },
-})
-
 export const updateName = mutation({
   args: {
     sessionWarriorId: v.id('sessionWarriors'),
@@ -140,6 +122,45 @@ export const addEquipment = mutation({
     const session = await ctx.db.get(sessionWarrior.sessionId)
     if (!session) throw new Error('Session not found')
     if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    // Server-side validation for armour-related fields on the item
+    const validateArmourField = (label: string, value: number | undefined) => {
+      if (value === undefined) return
+      if (!Number.isInteger(value))
+        throw new Error(`${label} must be an integer`)
+    }
+
+    validateArmourField('penetration', args.item.penetration)
+    validateArmourField('armourSave', args.item.armourSave)
+    validateArmourField('invulnerableSave', args.item.invulnerableSave)
+
+    if (
+      args.item.penetration !== undefined &&
+      (args.item.penetration < -6 || args.item.penetration > 6)
+    )
+      throw new Error('penetration must be between -6 and 6')
+
+    if (
+      args.item.armourSave !== undefined &&
+      (args.item.armourSave < 2 || args.item.armourSave > 6)
+    )
+      throw new Error('armourSave must be between 2 and 6')
+
+    if (
+      args.item.invulnerableSave !== undefined &&
+      (args.item.invulnerableSave < 2 || args.item.invulnerableSave > 6)
+    )
+      throw new Error('invulnerableSave must be between 2 and 6')
+
+    // Enforce max 3 of the same equipment per unit (one entry per item)
+    const existingCounts: Record<string, number> = {}
+    for (const e of sessionWarrior.equipment) {
+      const eq = e as { name: string }
+      existingCounts[eq.name] = (existingCounts[eq.name] || 0) + 1
+    }
+    const total = (existingCounts[args.item.name] || 0) + 1
+    if (total > 3)
+      throw new Error('Cannot have more than 3 of the same equipment')
 
     await ctx.db.patch(args.sessionWarriorId, {
       equipment: [...sessionWarrior.equipment, args.item],
@@ -186,6 +207,46 @@ export const updateEquipment = mutation({
     const session = await ctx.db.get(sessionWarrior.sessionId)
     if (!session) throw new Error('Session not found')
     if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
+
+    // Validate max 3 identical items in provided equipment list
+    const counts: Record<string, number> = {}
+    for (const it of args.equipment) {
+      // Server-side validation per item
+      const validateArmourField = (
+        label: string,
+        value: number | undefined,
+      ) => {
+        if (value === undefined) return
+        if (!Number.isInteger(value))
+          throw new Error(`${label} must be an integer`)
+      }
+
+      validateArmourField('penetration', it.penetration)
+      validateArmourField('armourSave', it.armourSave)
+      validateArmourField('invulnerableSave', it.invulnerableSave)
+
+      if (
+        it.penetration !== undefined &&
+        (it.penetration < -6 || it.penetration > 6)
+      )
+        throw new Error('penetration must be between -6 and 6')
+
+      if (
+        it.armourSave !== undefined &&
+        (it.armourSave < 2 || it.armourSave > 6)
+      )
+        throw new Error('armourSave must be between 2 and 6')
+
+      if (
+        it.invulnerableSave !== undefined &&
+        (it.invulnerableSave < 2 || it.invulnerableSave > 6)
+      )
+        throw new Error('invulnerableSave must be between 2 and 6')
+
+      counts[it.name] = (counts[it.name] || 0) + 1
+      if (counts[it.name] > 3)
+        throw new Error('Cannot have more than 3 of the same equipment')
+    }
 
     await ctx.db.patch(args.sessionWarriorId, { equipment: args.equipment })
   },

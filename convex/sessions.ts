@@ -37,8 +37,6 @@ export const create = mutation({
     const playerSlots = Array.from({ length: args.playerCount }, (_, i) => ({
       label: `Player ${i + 1}`,
       warbandId: undefined,
-      coinBudget: undefined,
-      gold: 0,
     }))
 
     return await ctx.db.insert('sessions', {
@@ -117,7 +115,6 @@ export const assignWarband = mutation({
     sessionId: v.id('sessions'),
     slotIndex: v.number(),
     warbandId: v.id('warbands'),
-    coinBudget: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -153,11 +150,9 @@ export const assignWarband = mutation({
           name: warrior.name,
           role: warrior.role,
           type: warrior.type,
-          coinValue: warrior.coinValue,
           isActive: false,
           isDead: false,
           deadRound: undefined,
-          experience: 0,
           stats: { ...warrior.stats },
           equipment: [...warrior.equipment],
           skills: [...warrior.skills],
@@ -172,7 +167,6 @@ export const assignWarband = mutation({
         ? {
             ...slot,
             warbandId: args.warbandId,
-            coinBudget: args.coinBudget,
           }
         : slot,
     )
@@ -184,30 +178,7 @@ export const assignWarband = mutation({
   },
 })
 
-export const updateSlotGold = mutation({
-  args: {
-    sessionId: v.id('sessions'),
-    slotIndex: v.number(),
-    gold: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Unauthorized')
-
-    const session = await ctx.db.get(args.sessionId)
-    if (!session) throw new Error('Session not found')
-    if (session.hostUserId !== identity.subject) throw new Error('Unauthorized')
-
-    const updatedSlots = session.playerSlots.map((slot, i) =>
-      i === args.slotIndex ? { ...slot, gold: args.gold } : slot,
-    )
-
-    await ctx.db.patch(args.sessionId, {
-      playerSlots: updatedSlots,
-      updatedAt: Date.now(),
-    })
-  },
-})
+// Note: slot gold/coin handling removed per project decision
 
 export const updateSlotLabel = mutation({
   args: {

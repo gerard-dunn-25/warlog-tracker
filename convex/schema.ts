@@ -15,10 +15,12 @@ const statsFields = {
 
 const equipmentItem = v.object({
   name: v.string(),
-  cost: v.number(),
   strengthBonus: v.optional(v.number()),
+  penetration: v.optional(v.number()),
+  invulnerableSave: v.optional(v.number()),
   armourSave: v.optional(v.number()),
   notes: v.optional(v.string()),
+  category: v.optional(v.union(v.literal('weapon'), v.literal('armour'))),
 })
 
 export default defineSchema({
@@ -34,7 +36,6 @@ export default defineSchema({
     name: v.optional(v.string()),
     role: v.union(v.literal('champion'), v.literal('follower')),
     type: v.string(),
-    coinValue: v.number(),
     stats: v.object(statsFields),
     equipment: v.array(equipmentItem),
     skills: v.array(v.string()),
@@ -52,8 +53,6 @@ export default defineSchema({
       v.object({
         label: v.string(),
         warbandId: v.optional(v.id('warbands')),
-        coinBudget: v.optional(v.number()),
-        gold: v.number(), // earned during session
       }),
     ),
     createdAt: v.number(),
@@ -68,11 +67,9 @@ export default defineSchema({
     name: v.optional(v.string()),
     role: v.union(v.literal('champion'), v.literal('follower')),
     type: v.string(),
-    coinValue: v.number(),
     isActive: v.boolean(),
     isDead: v.boolean(),
     deadRound: v.optional(v.number()),
-    experience: v.number(),
     stats: v.object(statsFields),
     equipment: v.array(equipmentItem),
     skills: v.array(v.string()),
@@ -82,8 +79,10 @@ export default defineSchema({
     .index('by_session_and_warband', ['sessionId', 'warbandId']),
   equipmentCatalog: defineTable({
     name: v.string(),
-    cost: v.number(),
     strengthBonus: v.optional(v.number()),
+    category: v.optional(v.union(v.literal('weapon'), v.literal('armour'))),
+    penetration: v.optional(v.number()),
+    invulnerableSave: v.optional(v.number()),
     armourSave: v.optional(v.number()),
     notes: v.optional(v.string()),
     createdBy: v.string(),

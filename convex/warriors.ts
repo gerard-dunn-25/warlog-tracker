@@ -3,10 +3,12 @@ import { mutation, query } from './_generated/server'
 
 const equipmentItem = v.object({
   name: v.string(),
-  cost: v.number(),
   strengthBonus: v.optional(v.number()),
+  penetration: v.optional(v.number()),
+  invulnerableSave: v.optional(v.number()),
   armourSave: v.optional(v.number()),
   notes: v.optional(v.string()),
+  quantity: v.optional(v.number()),
 })
 
 const statsFields = v.object({
@@ -44,7 +46,6 @@ export const create = mutation({
     name: v.string(),
     role: v.union(v.literal('champion'), v.literal('follower')),
     type: v.string(),
-    coinValue: v.number(),
     stats: statsFields,
     equipment: v.array(equipmentItem),
     skills: v.array(v.string()),
@@ -68,7 +69,6 @@ export const update = mutation({
     name: v.optional(v.string()),
     role: v.optional(v.union(v.literal('champion'), v.literal('follower'))),
     type: v.optional(v.string()),
-    coinValue: v.optional(v.number()),
     stats: v.optional(statsFields),
     equipment: v.optional(v.array(equipmentItem)),
     skills: v.optional(v.array(v.string())),
